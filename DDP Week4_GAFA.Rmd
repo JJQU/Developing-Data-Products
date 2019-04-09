@@ -1,0 +1,115 @@
+---
+title: "Developing Data Product Week 4 Assigment"
+author: "Jessie J. Q"
+date: "April 9, 2019"
+output: html_document
+runtime: shiny
+---
+
+# Synopsis
+
+This assignment has two parts. The first part includes developing a Shiny application and the deployment of this application on Rstudio's server. The second part is to prepare a reproducible pitch presentation about this application.
+
+# About this application
+
+This application gives user an interactive way to find out the stock prices for Google, Apple, Facebook and Amazon in the past fourteen year. Users can choose company name, and the date range that they are interested in knowing and then click on the plot to see the price.
+
+This application is bulit on the GAFA Stock Price dataset from Kaggle. Below is the link to this dataset.
+https://www.kaggle.com/stexo92/gafa-stock-prices
+
+# Data Understanding
+
+GAFA (Google, Apple, Facebook, Amazon) stock prices until 20 April 2018.
+
+Source: Yahoo Finance
+
+Columns: 
+1. Stock
+2. Date
+3. Open
+4. High
+5. Low
+6. Close
+7. Adj Close
+8. Volume
+
+# Data Preparation
+1. Load the data
+2. Check missing value. There is no missing value in this dataset.
+3. Transform character and factor data into numeric format
+4. Transform date from factor to date format
+3. Plot the data to display relationship, density and distribution
+
+```{r, include=TRUE, echo=TRUE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(GGally)
+library(DataExplorer)
+```
+
+```{r, include=TRUE, echo=TRUE}
+gafa <- read.csv("C:/Users/JJQ/Documents/data/GAFA Stock Prices.csv", stringsAsFactors = FALSE)
+str(gafa)
+na <- is.na(gafa)
+```
+
+```{r, include=TRUE, echo=TRUE}
+sub_gafa <- select(gafa, Open:Volume)
+sub_gafa1 <- lapply(sub_gafa, function(x)(as.numeric(x)))
+sub_gafa2 <- as.data.frame(sub_gafa1)
+
+date <- as.Date(gafa$Date, '%d/%m/%Y')
+
+gafa_stock <- cbind(gafa$Stock, date, sub_gafa2)
+colnames(gafa_stock) <- c("Company", "Date", "Open", "High", "Low", "Price", "AdjClose", "Volume" )
+str(gafa_stock)
+head(gafa_stock)
+
+```
+
+```{r, include=TRUE, echo=TRUE}
+
+plot_histogram(gafa_stock)
+
+plot_density(gafa_stock)
+
+g1 <- ggplot(gafa_stock, aes(Date, Price, color = Company)) + geom_line()
+print(g1)
+
+ggcorr(gafa_stock, label = TRUE)
+
+
+
+```
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
+
+To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
+
+# Shiny Application
+## Inputs and Outputs
+
+```{r eruptions, echo=FALSE}
+inputPanel(
+  selectInput("Company", "Company Name:", c("Google", "Apple", "Facebook", "Amazon")),
+      dateRangeInput("Date", "Date Range:", 
+                     start = "2004-08-19",
+                     end = "2018-04-20"),
+      checkboxInput("show_xlab", "Show/Hide X Axis Label", value = TRUE),
+      checkboxInput("show_ylab", "Show/Hide Y Axis Label", value = TRUE), 
+      checkboxInput("show_title", "Show/Hide Title")
+       
+)
+
+renderPlot({
+  g <- ggplot(gafa_stock, aes(Date, Price, color = Company)) + geom_line() + xlab("Date") + ylab("Price")
+    print(g)
+})
+```
+
