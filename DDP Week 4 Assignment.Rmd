@@ -66,6 +66,21 @@ str(gafa_stock)
 head(gafa_stock)
 
 ```
+### Subset dataframe based for each company
+```{r, include=FALSE, echo=FALSE}
+Google <- gafa_stock %>% filter(Company == "Google")
+head(Google)
+str(Google)
+
+Amazon <- gafa_stock %>% filter(Company == "Amazon")
+str(Amazon)
+
+Apple <- gafa_stock %>% filter(Company == "Apple")
+str(Apple)
+
+Facebook <- gafa_stock %>% filter(Company == "Facebook")
+str(Facebook)
+```
 
 ### Plot distribution
 
@@ -98,23 +113,30 @@ shinyUI(fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      selectInput("Company", "Company Name:", c("Google", "Apple", "Facebook", "Amazon")),
-      dateRangeInput("Date", "Date Range:", 
-                     start = "2004-08-19",
-                     end = "2018-04-20"),
-       checkboxInput("show_xlab", "Show/Hide X Axis Label", value = TRUE),
-       checkboxInput("show_ylab", "Show/Hide Y Axis Label", value = TRUE), 
-       checkboxInput("show_title", "Show/Hide Title")
-       
+      selectInput(inputId = "dataset",
+                  label = "Choose a company:",
+                  choices = c("Amazon", "Apple", "Facebook", "Google")),
+      
+      dateInput("date", "Date", min = 2004-08-18, max = 2018-04-20),
+      
+      numericInput(inputId = "obs",
+                   label = "Number of observations to view:",
+                   value = 10),
+      
+      checkboxInput("show_xlab", "Show/Hide X Axis Label", value = TRUE),
+      checkboxInput("show_ylab", "Show/Hide Y Axis Label", value = TRUE) 
+      
     ),
 
     # Show a plot of the generated distribution
     mainPanel(
-       plotOutput("plot1")
+       plotOutput("plot1"),
+       tableOutput("view")
       
     )
   )
 ))
+
 
 ```
 
@@ -124,15 +146,34 @@ shinyUI(fluidPage(
 ```{r, include=FALSE, echo=FALSE}
 library(shiny)
 library(ggplot2)
+library(dplyr)
 
+# Define server logic required to draw a histogram
 shinyServer(function(input, output) {
+  datasetInput <- reactive({
+    switch(input$dataset,
+           "Apple" = Apple,
+           "Amazon" = Amazon,
+           "Facebook" = Facebook,
+           "Google" = Google)
+  })
+  
+  output$summary <- renderPrint({
+    dataset <- datasetInput()
+    summary(dataset)
+  })
    
+  output$view <- renderTable({
+    head(datasetInput(), n = input$obs)
+  })
+  
   output$plot1 <- renderPlot({
     
     g <- ggplot(gafa_stock, aes(Date, Price, color = Company)) + geom_line() + xlab("Date") + ylab("Price")
     print(g)
-    
+   
   })
+ 
   
 })
 
