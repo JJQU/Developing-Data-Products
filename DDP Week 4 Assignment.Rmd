@@ -66,20 +66,24 @@ str(gafa_stock)
 head(gafa_stock)
 
 ```
-### Subset dataframe based for each company
+### Subset dataframe for each company
+### Transform Date from date format to character to display in shiny properly
 ```{r, include=FALSE, echo=FALSE}
-Google <- gafa_stock %>% filter(Company == "Google")
-head(Google)
-str(Google)
+google2 <- gafa_stock %>% filter(Company == "Google") %>% mutate(Date1=as.character(Date))
+google2 <- select(google2, -c(Date))
+head(google2)
 
-Amazon <- gafa_stock %>% filter(Company == "Amazon")
-str(Amazon)
+amazon2 <- gafa_stock %>% filter(Company == "Amazon") %>% mutate(Date1=as.character(Date))
+amazon2 <- select(amazon2, -c(Date))
+head(amazon2)
 
-Apple <- gafa_stock %>% filter(Company == "Apple")
-str(Apple)
+apple2 <- gafa_stock %>% filter(Company == "Apple") %>% mutate(Date1=as.character(Date))
+apple2 <- select(apple2, -c(Date))
+head(apple2)
 
-Facebook <- gafa_stock %>% filter(Company == "Facebook")
-str(Facebook)
+facebook2 <- gafa_stock %>% filter(Company == "Facebook") %>% mutate(Date1=as.character(Date))
+facebook2 <- select(facebook2, -c(Date))
+head(facebook2)
 ```
 
 ### Plot distribution
@@ -148,14 +152,13 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   datasetInput <- reactive({
     switch(input$dataset,
-           "Apple" = Apple,
-           "Amazon" = Amazon,
-           "Facebook" = Facebook,
-           "Google" = Google)
+           "Apple" = apple2,
+           "Amazon" = amazon2,
+           "Facebook" = facebook2,
+           "Google" = google2)
   })
   
   output$summary <- renderPrint({
@@ -163,8 +166,8 @@ shinyServer(function(input, output) {
     summary(dataset)
   })
    
-  output$view <- renderTable({
-    head(datasetInput(), n = input$obs)
+   output$view <- renderTable({
+    filter(datasetInput(), Date1 == input$date)
   })
   
   output$plot1 <- renderPlot({
